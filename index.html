@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Callback Desk - Voice lead intake demo</title>
+<meta name="description" content="Demo: a voice agent that gathers contact details, confirms a service and a callback slot, and files only complete leads.">
+<meta name="color-scheme" content="dark">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<noscript><p style="padding:24px">This demo needs JavaScript.</p></noscript>
+
+<div class="progress" id="progress"></div>
+<div class="cursor" id="cursor" aria-hidden="true"></div>
+
+<header class="nav" id="nav">
+  <a class="brand" href="#top" aria-label="Callback Desk">
+    <span class="brand-mark"></span><span>Callback Desk</span>
+  </a>
+  <nav>
+    <a href="#desk">Live desk</a>
+    <a href="#flow">How it runs</a>
+    <a href="#vault">Vault</a>
+  </nav>
+  <a class="btn btn-sm magnet" href="#desk">Try a call</a>
+</header>
+
+<main>
+<section class="hero" id="top">
+  <canvas id="orb" aria-hidden="true"></canvas>
+  <div class="hero-copy" id="heroCopy">
+    <p class="eyebrow rv"><span class="pulse"></span> Demo build &middot; simulated call, real validation</p>
+    <h1>
+      <span class="line"><span>Every call,</span></span>
+      <span class="line"><span>sorted <em>before</em></span></span>
+      <span class="line"><span>it ends.</span></span>
+    </h1>
+    <p class="lead rv" style="--d:.2s">A voice agent collects contact details, confirms the service and a callback slot, and files only the leads that are complete. Everything else goes to a human queue.</p>
+    <div class="hero-cta rv" style="--d:.3s">
+      <a class="btn magnet" href="#desk" id="ctaStart"><i data-lucide="phone-call"></i> Start a call</a>
+      <button class="btn btn-ghost magnet" id="ctaAuto" type="button"><i data-lucide="play"></i> Play a sample call</button>
+    </div>
+    <ul class="stats rv" style="--d:.4s">
+      <li><b data-count="5">5</b><span>required fields</span></li>
+      <li><b data-count="0">0</b><span>personal data in logs</span></li>
+      <li><b data-count="256">256</b><span>bit AES vault</span></li>
+    </ul>
+  </div>
+  <a class="scroll-cue" href="#desk" aria-label="Scroll to the desk"><i data-lucide="arrow-down"></i></a>
+</section>
+
+<section class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    <span>Name</span><i></i><span>Phone</span><i></i><span>Email</span><i></i><span>Service</span><i></i><span>Callback time</span><i></i>
+    <span>Validate</span><i></i><span>Qualify</span><i></i><span>Encrypt</span><i></i><span>Log</span><i></i><span>Follow up</span><i></i>
+    <span>Name</span><i></i><span>Phone</span><i></i><span>Email</span><i></i><span>Service</span><i></i><span>Callback time</span><i></i>
+    <span>Validate</span><i></i><span>Qualify</span><i></i><span>Encrypt</span><i></i><span>Log</span><i></i><span>Follow up</span><i></i>
+  </div>
+</section>
+
+<section class="sec" id="desk">
+  <div class="sec-head rv">
+    <p class="kicker">01 / Live desk</p>
+    <h2>Talk to it. It files the lead as you speak.</h2>
+    <p>Answer the agent, or press <b>Play a sample call</b>. Try a bad email on purpose and watch it get re-asked and logged.</p>
+  </div>
+
+  <div class="desk">
+    <div class="call panel rv" id="call">
+      <div class="call-top">
+        <div class="avatar"><span></span></div>
+        <div class="call-id">
+          <b>Desk agent</b>
+          <span id="callState">Idle - press start</span>
+        </div>
+        <div class="wave" id="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <span class="timer" id="timer">00:00</span>
+      </div>
+      <div class="chat" id="chat" aria-live="polite">
+        <p class="chat-empty">No call in progress.</p>
+      </div>
+      <div class="dock" id="dock">
+        <div class="dock-idle">
+          <button class="btn magnet" id="btnStart" type="button"><i data-lucide="phone-call"></i> Start call</button>
+          <button class="btn btn-ghost" id="btnAuto" type="button"><i data-lucide="play"></i> Sample call</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tilt rv" id="tilt" style="--d:.1s">
+      <div class="flip" id="flip">
+        <article class="face front panel lead-card">
+          <header class="lc-head">
+            <div class="ring-wrap">
+              <svg viewBox="0 0 44 44" class="ring" aria-hidden="true">
+                <circle cx="22" cy="22" r="18" class="ring-bg"/>
+                <circle cx="22" cy="22" r="18" class="ring-fg" id="ringFg" pathLength="100"/>
+              </svg>
+              <span class="ring-n" id="ringN">0/5</span>
+            </div>
+            <div>
+              <b>Lead file</b>
+              <span class="mono" id="leadId">no session</span>
+            </div>
+            <span class="chip" id="leadChip">waiting</span>
+          </header>
+          <ul class="fields" id="fields"></ul>
+          <ol class="pipe" id="pipe">
+            <li data-k="validated">Validated</li>
+            <li data-k="scored">Scored</li>
+            <li data-k="encrypted">Encrypted</li>
+            <li data-k="stored">Stored</li>
+            <li data-k="followup">Follow-up queued</li>
+          </ol>
+          <div class="stamp" id="stamp" aria-hidden="true">QUALIFIED</div>
+          <footer class="lc-foot">
+            <button class="btn btn-ghost btn-sm" id="btnEmail" type="button" disabled><i data-lucide="mail"></i> Email</button>
+            <button class="btn btn-ghost btn-sm" id="btnPayload" type="button" disabled><i data-lucide="braces"></i> Payload</button>
+            <button class="btn btn-ghost btn-sm" id="btnFlip" type="button" disabled><i data-lucide="rotate-3d"></i> Vault copy</button>
+          </footer>
+        </article>
+        <article class="face back panel lead-card">
+          <header class="lc-head">
+            <div class="vault-ico"><i data-lucide="lock-keyhole"></i></div>
+            <div>
+              <b>Vault copy</b>
+              <span class="mono">AES-GCM / 256 / key not exportable</span>
+            </div>
+          </header>
+          <p class="mono cipher" id="cipher">Nothing stored yet.</p>
+          <p class="note">What sits on disk is this blob plus a few non-personal fields. Names, phones and emails are only readable after decrypting, and only for roles that are allowed to.</p>
+          <footer class="lc-foot">
+            <button class="btn btn-ghost btn-sm" id="btnFlipBack" type="button"><i data-lucide="rotate-ccw"></i> Back</button>
+          </footer>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="flow">
+  <div class="sec-head rv">
+    <p class="kicker">02 / How it runs</p>
+    <h2>Four stations. A lead only moves on if the last one signs off.</h2>
+  </div>
+  <div class="rail-wrap" id="railWrap">
+    <div class="rail"><div class="rail-fill" id="railFill"></div></div>
+    <div class="cards">
+      <article class="card tilt-sm rv" style="--d:0s"><span class="node"></span><i data-lucide="mic"></i><h3>Capture</h3><p>The agent asks for one thing at a time and keeps a running transcript. No long forms, no guessing.</p></article>
+      <article class="card tilt-sm rv" style="--d:.08s"><span class="node"></span><i data-lucide="shield-check"></i><h3>Validate</h3><p>Every answer is checked against its own rule. Bad input is re-asked and logged by error code, never by content.</p></article>
+      <article class="card tilt-sm rv" style="--d:.16s"><span class="node"></span><i data-lucide="badge-check"></i><h3>Qualify</h3><p>Qualified means all five fields are valid: name, phone, email, service and a confirmed callback time. Anything less goes to review.</p></article>
+      <article class="card tilt-sm rv" style="--d:.24s"><span class="node"></span><i data-lucide="database"></i><h3>Store &amp; follow up</h3><p>Encrypted record, role-based access, a hash-chained audit trail, a signed webhook payload and a confirmation email.</p></article>
+    </div>
+  </div>
+  <p class="plug rv">Plugs in later: <span>voice provider</span><span>LLM API</span><span>CRM or Sheets</span><span>email API</span>. This demo simulates them so you can judge the logic first.</p>
+</section>
+
+<section class="sec" id="vault">
+  <div class="sec-head rv">
+    <p class="kicker">03 / Vault &amp; audit</p>
+    <h2>Same data, different eyes.</h2>
+    <p>Switch the role. Viewers see masked records, agents see contact details, only admins can export or purge.</p>
+  </div>
+
+  <div class="vault">
+    <div class="panel rv">
+      <div class="vault-bar">
+        <div class="seg" id="roleSeg" role="tablist" aria-label="Role">
+          <button type="button" role="tab" data-role="viewer">Viewer</button>
+          <button type="button" role="tab" data-role="agent" class="on">Agent</button>
+          <button type="button" role="tab" data-role="admin">Admin</button>
+          <span class="seg-pill"></span>
+        </div>
+        <div class="vault-actions">
+          <button class="btn btn-ghost btn-sm" id="btnExport" type="button"><i data-lucide="download"></i> Export CSV</button>
+          <button class="btn btn-ghost btn-sm" id="btnPurge" type="button"><i data-lucide="trash-2"></i> Purge</button>
+        </div>
+      </div>
+      <div class="table" id="leads"></div>
+    </div>
+
+    <div class="panel rv" style="--d:.1s">
+      <div class="vault-bar">
+        <div class="seg" id="logSeg" role="tablist" aria-label="Log view">
+          <button type="button" role="tab" data-log="audit" class="on">Audit</button>
+          <button type="button" role="tab" data-log="errors">Errors <em id="errCount">0</em></button>
+          <span class="seg-pill"></span>
+        </div>
+        <span class="mono dim">each line hashes the one before it</span>
+      </div>
+      <ul class="logs" id="logs"></ul>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <span class="brand"><span class="brand-mark"></span><span>Callback Desk</span></span>
+  <span class="mono dim">Demo build. Sample data only. Calls, email and CRM are simulated.</span>
+</footer>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<div class="modal" id="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="m-back" data-close></div>
+  <div class="m-box panel">
+    <header><b id="mTitle" class="m-title">Title</b><button class="m-close" type="button" data-close aria-label="Close"><i data-lucide="x"></i></button></header>
+    <div class="m-body"></div>
+  </div>
+</div>
+</body>
+</html>
